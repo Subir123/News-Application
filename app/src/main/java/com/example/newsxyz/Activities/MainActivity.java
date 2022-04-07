@@ -3,6 +3,7 @@ package com.example.newsxyz.Activities;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import android.app.ProgressDialog;
 import android.content.Context;
@@ -31,11 +32,15 @@ public class MainActivity extends AppCompatActivity implements SelectListener {
     RecyclerView recyclerView;
     CustomAdapter adapter;
     ProgressDialog dialog;
+    SwipeRefreshLayout swipeRefreshLayout;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        swipeRefreshLayout = findViewById(R.id.refreshLayout);
 
         dialog  = new ProgressDialog(this);
         dialog.setTitle("Loading news articles..");
@@ -45,6 +50,15 @@ public class MainActivity extends AppCompatActivity implements SelectListener {
 
         loadData();
 
+
+       swipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+           @Override
+           public void onRefresh() {
+               loadData();
+               adapter.notifyDataSetChanged();
+               swipeRefreshLayout.setRefreshing(false);
+           }
+       });
 
     }
 
@@ -64,13 +78,13 @@ public class MainActivity extends AppCompatActivity implements SelectListener {
                 List<NewsHeadlines> mylist;
                 Type type = new TypeToken<List<NewsHeadlines>>(){}.getType();
                 mylist = mygson.fromJson(myjson,type);
-                recyclerView.setHasFixedSize(true);
                 recyclerView.setLayoutManager(new GridLayoutManager(this,1));
-                CustomAdapter myadapter = new CustomAdapter(this,mylist,this);
-                recyclerView.setAdapter(myadapter);
+                adapter = new CustomAdapter(this,mylist,this);
+                recyclerView.setAdapter(adapter);
 
             }
             else {
+                dialog.dismiss();
             Toast.makeText(getApplicationContext(), "Check Your Internet Connection and try again..", Toast.LENGTH_SHORT).show();
         }}
     }
@@ -99,7 +113,6 @@ public class MainActivity extends AppCompatActivity implements SelectListener {
             editor.putString("taskList",json);
             editor.apply();
 
-            recyclerView.setHasFixedSize(true);
             recyclerView.setLayoutManager(new GridLayoutManager(this,1));
             adapter = new CustomAdapter(this,list,this);
             recyclerView.setAdapter(adapter);
